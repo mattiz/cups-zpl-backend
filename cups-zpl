@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+   echo "direct cups-zpl \"Unknown\" \"Print zpl job to file\""
+   exit 0
+fi
+
+
+LOG=/tmp/cups-zpl.log;
+JOBID=$1 ;
+USER=$2 ;
+TITLE=$3 ;
+COPIES=$4 ;
+OPTIONS=$5 ;
+PID=$$ ;
+
+TARGETFOLDER="/home/${USER}/PDF"
+
+TARGETFILE_ZPL="${TARGETFOLDER}/${TITLE}_${JOBID}.zpl"
+TARGETFILE_PDF="${TARGETFOLDER}/${TITLE}_${JOBID}.pdf"
+
+echo '----------------'    >> ${LOG} 
+echo "JOBID: ${JOBID}"     >> ${LOG} 
+echo "USER: ${USER}"       >> ${LOG} 
+echo "TITLE: ${TITLE}"     >> ${LOG} 
+echo "COPIES: ${COPIES}"   >> ${LOG} 
+echo "OPTIONS: ${OPTIONS}" >> ${LOG} 
+
+
+if [ ! -w "$TARGETFOLDER" ]; then
+	echo "ERROR - Folder ${TARGETFOLDER} not writable" >> $LOG;
+	exit 1;
+fi
+
+
+echo "Printing ZPL to $TARGETFILE_ZPL" >> ${LOG}
+cat $6 > $TARGETFILE_ZPL
+chmod 666 $TARGETFILE_ZPL
+
+echo "Printing PDF to $TARGETFILE_PDF" >> ${LOG}
+curl --request POST http://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/ --form "file=@$TARGETFILE_ZPL" --header "Accept: application/pdf" --fail --silent --show-error > "$TARGETFILE_PDF" 2>> $LOG
+chmod 666 $TARGETFILE_PDF
+
